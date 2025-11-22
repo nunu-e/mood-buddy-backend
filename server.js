@@ -5,6 +5,8 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 
 import authRoutes from "./routes/auth.js";
 import moodRoutes from "./routes/mood.js";
@@ -14,7 +16,7 @@ import errorHandler from "./middleware/errorHandler.js";
 dotenv.config();
 
 const app = express();
-
+const PORT = process.env.PORT || 5001;
 app.use(helmet());
 
 const limiter = rateLimit({
@@ -43,6 +45,40 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("combined"));
 }
 
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "MoodBuddy API",
+      version: "1.0.0",
+      description: "API documentation for MoodBuddy",
+    },
+    servers: [
+      {
+        url: process.env.BASE_URL || `http://localhost:${PORT}`,
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+  },
+  apis: ["./routes/**/*.js"],
+};
+
+const specs = swaggerJsdoc(swaggerOptions);
+
+app.get("/swagger.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(specs);
+});
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -80,8 +116,6 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
-
-const PORT = process.env.PORT || 5001;
 
 const startServer = async () => {
   try {

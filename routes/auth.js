@@ -9,6 +9,12 @@ import {
   deactivateAccount,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/auth.js";
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: User authentication and account management
+ */
 
 const router = express.Router();
 
@@ -62,18 +68,169 @@ const changePasswordValidation = [
     .isLength({ min: 6 })
     .withMessage("New password must be at least 6 characters"),
 ];
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - email
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: nunu123
+ *               email:
+ *                 type: string
+ *                 example: nunu@example.com
+ *               password:
+ *                 type: string
+ *                 example: pass1234
+ */
 
 router.post("/register", registerValidation, register);
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user and return token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: nunu@example.com
+ *               password:
+ *                 type: string
+ *                 example: pass1234
+ */
+
 router.post("/login", loginValidation, login);
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get logged-in user info
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User data returned successfully
+ *       401:
+ *         description: Unauthorized - Token missing or invalid
+ */
 
 router.get("/me", protect, getMe);
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profile:
+ *                 type: object
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                     example: Nunu
+ *                   lastName:
+ *                     type: string
+ *                     example: Smith
+ *                   gender:
+ *                     type: string
+ *                     enum: [male, female, other, prefer-not-to-say]
+ *               settings:
+ *                 type: object
+ *                 properties:
+ *                   theme:
+ *                     type: string
+ *                     enum: [light, dark, auto]
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       401:
+ *         description: Unauthorized
+ */
+
 router.put("/profile", protect, profileValidation, updateProfile);
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 example: oldPass123
+ *               newPassword:
+ *                 type: string
+ *                 example: newPass456
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *       401:
+ *         description: Unauthorized or wrong password
+ */
+
 router.put(
   "/change-password",
   protect,
   changePasswordValidation,
   changePassword
 );
+/**
+ * @swagger
+ * /api/auth/deactivate:
+ *   put:
+ *     summary: Deactivate user account
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deactivated successfully
+ *       401:
+ *         description: Unauthorized
+ */
+
 router.put("/deactivate", protect, deactivateAccount);
 
 export default router;
